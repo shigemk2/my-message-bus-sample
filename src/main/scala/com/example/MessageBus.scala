@@ -10,6 +10,7 @@ case class CommandHandler(applicationId: String, handler: ActorRef)
 case class ExecuteBuyOrder(portfolioId: String, symbol: String, quantitly: Int, price: Double)
 case class BuyOrderExecuted(portfolioId: String, symbol: String, quantitly: Int, price: Double)
 case class ExecuteSellOrder(portfolioId: String, symbol: String, quantitly: Int, price: Double)
+case class SellOrderExecuted(portofolioId: String, symbol: String, quantity: Int, price: Double)
 case class NotificationInterest(applicationId: String, interested: ActorRef)
 case class RegisterCommandHandler(applicationId: String, commandId: String, handler: ActorRef)
 case class RegisterNotificationInterest(applicationId: String, notificationId: String, interested: ActorRef)
@@ -87,5 +88,23 @@ class TradingBus(canStartAfterRegistered: Int) extends Actor {
 
     notificationInterests(notificationId) =
       notificationInterests(notificationId) :+ NotificationInterest(applicationId, interested)
+  }
+}
+
+class MarketAnalysisTools(tradingBus: ActorRef) extends Actor {
+  val applicationId = self.path.name
+
+  tradingBus ! RegisterNotificationInterest(applicationId, "BuyOrderExecuted", self)
+  tradingBus ! RegisterNotificationInterest(applicationId, "SellOrderExecuted", self)
+
+  override def receive: Receive = {
+    case executed: BuyOrderExecuted =>
+      println(s"MarketAnalysisTools: adding analysis for: $executed")
+      MessageBusDriver.completedStep()
+    case executed: SellOrderExecuted =>
+      println(s"MarketAnalysisTools: adding analysis for: $executed")
+      MessageBusDriver.completedStep()
+    case message: Any =>
+      println(s"MarketAnalysisTools: received unexpected: $message")
   }
 }
