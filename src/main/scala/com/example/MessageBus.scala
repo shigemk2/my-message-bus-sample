@@ -124,3 +124,25 @@ class PortfolioManager(tradingBus: ActorRef) extends Actor {
       println(s"PortfolioManager: received unexpected: $message")
   }
 }
+
+class StockTrader(tradingBus: ActorRef) extends Actor {
+  val applicationId = self.path.name
+
+  tradingBus ! RegisterCommandHandler(applicationId, "ExecuteBuyOrder", self)
+  tradingBus ! RegisterCommandHandler(applicationId, "ExecuteSellOrder", self)
+
+  def receive = {
+    case buy: ExecuteBuyOrder =>
+      println(s"StockTrader: buying for: $buy")
+      tradingBus ! TradingNotification("BuyOrderExecuted", BuyOrderExecuted(buy.portfolioId, buy.symbol, buy.quantity, buy.price))
+      MessageBusDriver.completedStep()
+
+    case sell: ExecuteSellOrder =>
+      println(s"StockTrader: selling for: $sell")
+      tradingBus ! TradingNotification("SellOrderExecuted", SellOrderExecuted(sell.portfolioId, sell.symbol, sell.quantity, sell.price))
+      MessageBusDriver.completedStep()
+
+    case message: Any =>
+      println(s"StockTrader: received unexpected: $message")
+  }
+}
