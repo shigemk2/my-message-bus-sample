@@ -4,7 +4,7 @@ import akka.actor.Actor.Receive
 import akka.actor._
 
 object MessageBusDriver extends CompletableApp(9) {
-  val tradingBus = system.actorOf(Props(classOf[TradingBus], 6), "tradingBug")
+  val tradingBus = system.actorOf(Props(classOf[TradingBus], 6), "tradingBus")
   val marketAnalysisTools = system.actorOf(Props(classOf[MarketAnalysisTools], tradingBus), "marketAnalysisTools")
   val portfolioManager = system.actorOf(Props(classOf[PortfolioManager], tradingBus), "portfolioManager")
   val stockTrader = system.actorOf(Props(classOf[StockTrader], tradingBus), "stockTrader")
@@ -15,10 +15,10 @@ object MessageBusDriver extends CompletableApp(9) {
 
   tradingBus ! TradingCommand("ExecuteBuyOrder", ExecuteBuyOrder("p123", "MSFT", 100, 31.85))
   tradingBus ! TradingCommand("ExecuteSellOrder", ExecuteSellOrder("p456", "MSFT", 200, 31.80))
-  tradingBus ! TradingCommand("ExecuteBuyOrder", ExecuteBuyOrder("p456", "MSFT", 100, 31.83))
+  tradingBus ! TradingCommand("ExecuteBuyOrder", ExecuteBuyOrder("p789", "MSFT", 100, 31.83))
 
   awaitCompletion
-  println("MessageBug: is completed.")
+  println("MessageBus: is completed.")
 }
 
 case class CommandHandler(applicationId: String, handler: ActorRef)
@@ -61,7 +61,7 @@ class TradingBus(canStartAfterRegistered: Int) extends Actor {
 
     if (totalRegistered == this.canStartAfterRegistered) {
       println(s"TradingBus: is ready with registered actors: $totalRegistered")
-      MessageBusDriver.completedStep()
+      MessageBusDriver.canStartNow()
     }
   }
 
@@ -117,7 +117,7 @@ class MarketAnalysisTools(tradingBus: ActorRef) extends Actor {
       println(s"MarketAnalysisTools: adding analysis for: $executed")
       MessageBusDriver.completedStep()
     case executed: SellOrderExecuted =>
-      println(s"MarketAnalysisTools: adding analysis for: $executed")
+      println(s"MarketAnalysisTools: adjusting analysis for: $executed")
       MessageBusDriver.completedStep()
     case message: Any =>
       println(s"MarketAnalysisTools: received unexpected: $message")
