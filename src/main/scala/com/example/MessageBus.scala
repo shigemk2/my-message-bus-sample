@@ -108,3 +108,19 @@ class MarketAnalysisTools(tradingBus: ActorRef) extends Actor {
       println(s"MarketAnalysisTools: received unexpected: $message")
   }
 }
+
+class PortfolioManager(tradingBus: ActorRef) extends Actor {
+  val applicationId = self.path.name
+  tradingBus ! RegisterNotificationInterest(applicationId, "BuyOrderExecuted", self)
+  tradingBus ! RegisterNotificationInterest(applicationId, "SellOrderExecuted", self)
+  def receive = {
+    case executed: BuyOrderExecuted =>
+      println(s"PortfolioManager: adding holding to portfolio for: $executed")
+      MessageBusDriver.completedStep()
+    case executed: SellOrderExecuted =>
+      println(s"PortfolioManager: adjusting holding in portfolio for: $executed")
+      MessageBusDriver.completedStep()
+    case message: Any =>
+      println(s"PortfolioManager: received unexpected: $message")
+  }
+}
