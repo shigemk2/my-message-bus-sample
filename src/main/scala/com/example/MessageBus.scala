@@ -4,6 +4,21 @@ import akka.actor.Actor.Receive
 import akka.actor._
 
 object MessageBusDriver extends CompletableApp(9) {
+  val tradingBus = system.actorOf(Props(classOf[TradingBus], 6), "tradingBug")
+  val marketAnalysisTools = system.actorOf(Props(classOf[MarketAnalysisTools], tradingBus), "marketAnalysisTools")
+  val portfolioManager = system.actorOf(Props(classOf[PortfolioManager], tradingBus), "portfolioManager")
+  val stockTrader = system.actorOf(Props(classOf[StockTrader], tradingBus), "stockTrader")
+
+  awaitCanStartNow
+
+  tradingBus ! Status
+
+  tradingBus ! TradingCommand("ExecuteBuyOrder", ExecuteBuyOrder("p123", "MSFT", 100, 31.85))
+  tradingBus ! TradingCommand("ExecuteSellOrder", ExecuteSellOrder("p456", "MSFT", 200, 31.80))
+  tradingBus ! TradingCommand("ExecuteBuyOrder", ExecuteBuyOrder("p456", "MSFT", 100, 31.83))
+
+  awaitCompletion
+  println("MessageBug: is completed.")
 }
 
 case class CommandHandler(applicationId: String, handler: ActorRef)
